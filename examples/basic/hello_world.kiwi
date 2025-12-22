@@ -1,0 +1,5 @@
+use "std::console"
+
+main () {
+  console.writeln("Hello, world!")
+} -> (exit_code: I32)
