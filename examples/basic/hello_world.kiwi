@@ -1,4 +1,3 @@
 main () -> (exit_code: I32)  {
   console.write_ln("Hello, World!")
 }
-

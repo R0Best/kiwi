@@ -2,8 +2,9 @@
 
 from enum import StrEnum
 
-from lexer.errors import DebugInfo, UnmatchedCategoryError
 from pydantic import BaseModel, Field, model_validator
+
+from kiwi.lexer.errors import DebugInfo, UnmatchedCategoryError
 
 
 class TokenCategory(StrEnum):

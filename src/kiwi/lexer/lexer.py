@@ -4,7 +4,7 @@ import re
 
 from pydantic import BaseModel
 
-from .tokens import Token, TokenCategory, TokenType
+from kiwi.lexer.tokens import Token, TokenCategory, TokenType
 
 
 class Lexer(BaseModel):

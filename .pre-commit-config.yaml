@@ -181,9 +181,14 @@ repos:
   - repo: local
     hooks:
       - id: ty
-        name: ty check
-        entry: uvx ty check . --ignore unresolved-import
-        language: python
+        name: ty
+        # This regex forces the hook to run ONLY on files in src/ or tests/
+        files: ^(src|tests)/
+        # Use uv to run it ensures it sees your project dependencies
+        entry: uv run ty check
+        language: system
+        types: [python]
+        pass_filenames: true
         stages: [pre-commit]
 
       - id: uv-pytest

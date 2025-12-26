@@ -1,14 +1,18 @@
+"""Initialize the kiwi package and define the CLI entry point."""
+
 from pathlib import Path
 
 import typer
-from lexer.lexer import Lexer
-from lexer.tokens import TokenCategory, TokenType
+
+from kiwi.lexer import Lexer
+from kiwi.lexer.tokens import TokenCategory
 
 app = typer.Typer()
 
 
 @app.command()
 def lex(input_file: str) -> None:
+    """Lex the source code from the given input file and print the tokens."""
     with Path(input_file).open("r") as file:
         lexer = Lexer(source_code=file.read())
 
@@ -22,11 +26,12 @@ def simulate(input_file: str) -> None:
 
 
 @app.command()
-def compile(input_file: str, output_file: str) -> None:
+def compile_code(input_file: str, output_file: str) -> None:
     """Compile the source code from input_file and save to output_file."""
 
 
-def main():
+def main() -> None:
+    """Entry point for the CLI."""
     app()
 
 
