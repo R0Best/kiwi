@@ -4,7 +4,7 @@ on:
   # Trigger on version tags (v1.0.0, v1.2.3, etc.)
   push:
     tags:
-      - 'v*'
+      - "v*"
   # Keep release triggers for manual releases
   release:
     types: [published, edited]
@@ -51,9 +51,12 @@ jobs:
           mkdir -p .github/badges
 
           # Generate the badge SVG
-          BADGE_URL="https://img.shields.io/badge/release-${CLEAN_VERSION}-brightgreen?style=round  -square"
+          BADGE_URL="BADGE_URL="https://img.shields.io/badge/release-${CLEAN_VERSION}-brightgreen?style=for-the-badge"
           curl -s -o .github/badges/release.svg "$BADGE_URL"
-
+          if [ ! -f .github/badges/release.svg ] || [ ! -s .github/badges/release.svg ]; then
+            echo "Badge generation failed. Check BADGE_URL and internet connectivity."
+            exit 1
+          fi  
           echo "Generated badge for version: $CLEAN_VERSION"
 
       - name: Commit and push badge
