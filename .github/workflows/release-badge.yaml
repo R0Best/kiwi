@@ -56,7 +56,7 @@ jobs:
           if [ ! -f .github/badges/release.svg ] || [ ! -s .github/badges/release.svg ]; then
             echo "Badge generation failed. Check BADGE_URL and internet connectivity."
             exit 1
-          fi  
+          fi
           echo "Generated badge for version: $CLEAN_VERSION"
 
       - name: Commit and push badge
