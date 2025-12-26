@@ -1,3 +1,4 @@
+from lexer.tokens import TokenCategory, TokenType
 from pathlib import Path
 
 import typer
@@ -9,8 +10,11 @@ app = typer.Typer()
 
 @app.command()
 def lex(input_file: str) -> None:
-    for token in Lexer(source_code=Path(input_file).open().read()).tokenize():
-        typer.echo(token)
+    with Path(input_file).open("r") as file:
+        lexer = Lexer(source_code=file.read())
+
+    for token in lexer.tokenize():
+        typer.echo(token) if token.category != TokenCategory.WHITESPACE else None
 
 
 @app.command()

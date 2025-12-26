@@ -37,8 +37,8 @@ class TokenType(StrEnum):
     """
 
     # --- COMMENTS ---
-    COMMENT_MULTI_LINE = r"------(.|\n)*?------"
-    COMMENT_SINGLE_LINE = r"---.*"
+    COMMENT_MULTI_LINE = r"---(.|\n)*?---"
+    COMMENT_SINGLE_LINE = r"--.*"
 
     # --- KEYWORDS ---
 
@@ -75,6 +75,8 @@ class TokenType(StrEnum):
     OPERATOR_LOGICAL_AND = r"AND"
     OPERATOR_LOGICAL_OR = r"OR"
 
+    SEPARATOR_ARROW = r"->"
+
     #   --- Relational operators ---
     OPERATOR_RELATIONAL_LOWER_EQUAL = r"<="
     OPERATOR_RELATIONAL_GREATER_EQUAL = r">="
@@ -102,7 +104,7 @@ class TokenType(StrEnum):
 
     # --- LITERALS ---
     LITERAL_STRING = r'"([^"\\]|\\.)*"'
-    LITERAL_CHARACTER = (r"'([^'\\]|\\.)'",)
+    LITERAL_CHARACTER = r"'([^'\\]|\\.)'"
     LITERAL_NUMBER_HEX = r"0[xX][0-9a-fA-F]+"
     LITERAL_NUMBER_BINARY = r"0[bB][01]+"
     LITERAL_NUMBER_FLOAT = r"\d+\.\d+"
@@ -132,8 +134,11 @@ class TokenType(StrEnum):
     WHITESPACE_FORM_FEED = r"\f"
     WHITESPACE_CARRIAGE_RETURN = r"\r"
     WHITESPACE_LINE_FEED = r"\n"
+    WHITESPACE_EOF = r"$"
 
     # --- IDENTIFIER ---
+    IDENTIFIER_MACRO = r"[a-zA-Z_][a-zA-Z0-9_]*!"
+    IDENTIFIER_DECORATOR = r"@[a-zA-Z_][a-zA-Z0-9_]*"
     IDENTIFIER_IDENTIFIER = r"[a-zA-Z_][a-zA-Z0-9_]*"
 
     # --- UNKNOWN ---

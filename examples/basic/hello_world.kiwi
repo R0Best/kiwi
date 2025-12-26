@@ -1,5 +1,4 @@
-use "std::console"
+main () -> (exit_code: I32)  {
+  console.write_ln("Hello, World!")
+}
 
-main () {
-  console.writeln("Hello, world!")
-} -> (exit_code: I32)

@@ -1,0 +1,6 @@
+for (VARIABLE in ITERABLE) {
+  ...
+} -> (...)
+then {
+  ...
+} -> (...)
