@@ -1,3 +1,7 @@
+[build-system]
+build-backend = "uv_build"
+requires = [ "uv-build>=0.9.17,<0.10" ]
+
 [project]
 name = "kiwi"
 version = "0.1.0"
@@ -7,32 +11,37 @@ authors = [
   { name = "Gozner Robert-Ioan", email = "gozner.robertioan@gmail.com" },
 ]
 requires-python = ">=3.13"
-dependencies = [
-    "llvmlite>=0.46.0",
-    "loguru>=0.7.3",
-    "pydantic>=2.12.5",
-    "typer>=0.20.1",
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
+dependencies = [
+  "llvmlite>=0.46",
+  "loguru>=0.7.3",
+  "pydantic>=2.12.5",
+  "typer>=0.20.1",
+]
+
+scripts.kiwi = "kiwi:main"
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.5.1",
-    "pytest>=9.0.2",
-    "pytest-cov>=7.0.0",
-    "ruff>=0.14.10",
-    "syrupy>=5.0.0",
-    "ty>=0.0.5",
-    "uv>=0.9.18",
+  "pre-commit>=4.5.1",
+  "pytest>=9.0.2",
+  "pytest-cov>=7",
+  "ruff>=0.14.10",
+  "syrupy>=5",
+  "ty>=0.0.5",
+  "uv>=0.9.18",
 ]
 
-[project.scripts]
-kiwi = "kiwi:main"
-
-[build-system]
-requires = ["uv_build>=0.9.17,<0.10.0"]
-build-backend = "uv_build"
-
 [tool.ruff]
+target-version = "py313"
+
+line-length = 88
+indent-width = 4
+
 exclude = [
   ".bzr",
   ".direnv",
@@ -62,37 +71,39 @@ exclude = [
   "venv",
 ]
 
-line-length = 88
-indent-width = 4
-
-
-target-version = "py313"
-
-[tool.ruff.lint]
-select = ["ALL"]
-ignore = ["D203", "D212", "COM812"]
-
-fixable = ["ALL"]
-unfixable = []
-
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-
-[tool.ruff.format]
-quote-style = "double"
-
-indent-style = "space"
-
-skip-magic-trailing-comma = false
-
-line-ending = "auto"
-
-docstring-code-format = true
-
-docstring-code-line-length = "dynamic"
-
+format.indent-style = "space"
+format.quote-style = "double"
+format.line-ending = "auto"
+format.skip-magic-trailing-comma = false
+format.docstring-code-line-length = "dynamic"
+format.docstring-code-format = true
+format.per-file-ignores."tests/**" = [
+  "D",       # skip pydocstyle checks in tests (docstrings not required)
+  "ANN",     # allow missing/partial type annotations in tests
+  "S101",    # allow bare 'assert' in tests (used by pytest)
+  "PLR2004", # allow magic values
+]
+lint.select = [ "ALL" ]
+lint.ignore = [ "COM812", "D203", "D212" ]
+lint.fixable = [ "ALL" ]
+lint.unfixable = [  ]
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+lint.pydocstyle.convention = "google"
 
 [tool.pytest.ini_options]
 minversion = "9.0"
 addopts = "--cov=src/mylang --cov-report=term-missing"
-testpaths = ["tests"]
-python_files = ["test_*.py"]
+testpaths = [ "tests" ]
+python_files = [ "test_*.py" ]
+
+[tool.semantic_release]
+version_toml = [ "pyproject.toml:project.version" ]
+branch = "main"
+changelog_file = "CHANGELOG.md"
+build_command = "uv build"
+upload_to_pypi = false                              # set true when ready and add PYPI_TOKEN in repo secrets
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+update_changelog_on_bump = true

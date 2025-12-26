@@ -1,0 +1,194 @@
+minimum_pre_commit_version: "4.5.0"
+
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+  - pre-push
+  - post-checkout
+  - post-merge
+  - post-rewrite
+
+ci:
+  autofix_prs: true
+  autoupdate_schedule: weekly
+  # Skip local uv type-checkers on pre-commit.ci (they still run locally)
+  skip:
+    - uv-pyright
+
+exclude: |
+  (?x)^(
+    dist/|
+    build/|
+    \.venv/|
+    venv/|
+    \.mypy_cache/|
+    \.pytest_cache/|
+    \.ruff_cache/|
+    \.coverage.*|
+    coverage\.xml|
+    htmlcov/|
+    \.git/|
+    \.idea/|
+    \.vscode/
+  )
+
+repos:
+  # ---------------------------------------------------------------------------
+  # uv: lock/sync/export (single source of truth for deps)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.9.18
+    hooks:
+      - id: uv-lock
+        name: uv lock (no upgrade)
+        files: ^pyproject\.toml$
+
+      - id: uv-sync
+        name: uv sync (locked, all packages)
+        args: ["--locked", "--all-packages"]
+        files: ^(pyproject\.toml|uv\.lock)$
+
+      # Runtime requirements (default dependencies only)
+      - id: uv-export
+        name: uv export -> requirements.txt (runtime)
+        args:
+          [
+            "--frozen",
+            "--no-dev",
+            "--format",
+            "requirements.txt",
+            "--output-file=requirements.txt",
+          ]
+        files: ^(pyproject\.toml|uv\.lock)$
+
+      # Dev requirements (dev group only). Combine with runtime when needed.
+      - id: uv-export
+        name: uv export -> requirements-dev.txt (dev tools)
+        args:
+          [
+            "--frozen",
+            "--only-dev",
+            "--format",
+            "requirements.txt",
+            "--output-file=requirements-dev.txt",
+          ]
+        files: ^(pyproject\.toml|uv\.lock)$
+
+      # Manual dependency upgrades (run when you decide to bump deps)
+      - id: uv-lock
+        name: uv lock --upgrade (manual)
+        args: ["--upgrade"]
+        stages: [manual]
+
+  # ---------------------------------------------------------------------------
+  # Ruff: formatter + linter (fast, fixes on commit)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
+    hooks:
+      - id: ruff-format
+      - id: ruff-check
+        args: [--fix]
+
+  # ---------------------------------------------------------------------------
+  # Core hygiene and file validity (cheap + valuable)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-ast
+      - id: check-added-large-files
+      - id: pretty-format-json
+        args: ["--autofix", "--no-ensure-ascii"]
+      - id: check-case-conflict
+
+  # ---------------------------------------------------------------------------
+  # Docs quality
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 1.0.0
+    hooks:
+      - id: mdformat
+        additional_dependencies:
+          - mdformat-gfm
+        files: \.(md|markdown)$
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        args: ["-L", "crate,nd"]
+
+  # ---------------------------------------------------------------------------
+  # Project meta formatting and CI schema checks
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: v2.8.0
+    hooks:
+      - id: pyproject-fmt
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.36.0
+    hooks:
+      - id: check-github-workflows
+
+  # ---------------------------------------------------------------------------
+  # Security and secrets
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: ^(requirements.*\.txt)$
+
+  - repo: https://github.com/trailofbits/pip-audit
+    rev: v2.10.0
+    hooks:
+      - id: pip-audit
+        name: pip-audit (from uv export)
+        args: ["-r", "requirements.txt", "-r", "requirements-dev.txt"]
+        stages: [pre-push]
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.2
+    hooks:
+      - id: bandit
+        args: ["-q", "-r", "src"]
+        stages: [pre-push]
+
+  # ---------------------------------------------------------------------------
+  # Conventional Commits -> enables auto-versioning & releases
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.10.1
+    hooks:
+      - id: commitizen
+        name: commitizen - verify Conventional Commits
+        stages: [commit-msg]
+        args: ["--allow-abort", "--retry"]
+
+  # ---------------------------------------------------------------------------
+  # Local hooks using uv (consistent tooling from your lockfile)
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty check
+        entry: uvx ty check . --ignore unresolved-import
+        language: python
+        stages: [pre-commit]
+
+      - id: uv-pytest
+        name: pytest (uv)
+        entry: uv run pytest -q
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
