@@ -82,6 +82,8 @@ format.skip-magic-trailing-comma = false
 format.docstring-code-line-length = "dynamic"
 format.docstring-code-format = true
 
+lint.select = [ "ALL" ]
+lint.ignore = [ "COM812", "D203", "D212" ]
 lint.per-file-ignores."tests/**" = [
   "ANN",     # allow missing/partial type annotations in tests
   "D",       # skip pydocstyle checks in tests (docstrings not required)
@@ -89,8 +91,6 @@ lint.per-file-ignores."tests/**" = [
   "S101",    # allow bare 'assert' in tests (used by pytest)
 ]
 
-lint.select = [ "ALL" ]
-lint.ignore = [ "COM812", "D203", "D212" ]
 lint.fixable = [ "ALL" ]
 lint.unfixable = [  ]
 lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
