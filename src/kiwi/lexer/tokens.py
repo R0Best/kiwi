@@ -2,9 +2,8 @@
 
 from enum import StrEnum
 
-from pydantic import BaseModel, Field, model_validator
-
 from lexer.errors import DebugInfo, UnmatchedCategoryError
+from pydantic import BaseModel, Field, model_validator
 
 
 class TokenCategory(StrEnum):
@@ -154,12 +153,16 @@ class TokenType(StrEnum):
 class Token(BaseModel):
     """The token model."""
 
-    category: TokenCategory = Field(...)
     type: TokenType = Field(...)
     text: str = Field(...)
     position: int = Field(...)
     line: int = Field(...)
     column: int = Field(...)
+
+    @property
+    def category(self) -> TokenCategory:
+        """Get the category of the token."""
+        return self.type.category
 
     @model_validator(mode="after")
     def post_init_check(self) -> "Token":

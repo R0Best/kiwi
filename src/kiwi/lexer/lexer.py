@@ -4,7 +4,7 @@ import re
 
 from pydantic import BaseModel
 
-from lexer.tokens import Token, TokenCategory, TokenType
+from .tokens import Token, TokenCategory, TokenType
 
 
 class Lexer(BaseModel):
@@ -44,7 +44,6 @@ class Lexer(BaseModel):
 
             if match:
                 return Token(
-                    category=token_type.category,
                     type=token_type,
                     text=match.group(0),
                     position=self.position,

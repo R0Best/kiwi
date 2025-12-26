@@ -1,9 +1,8 @@
-from lexer.tokens import TokenCategory, TokenType
 from pathlib import Path
 
 import typer
-
 from lexer.lexer import Lexer
+from lexer.tokens import TokenCategory, TokenType
 
 app = typer.Typer()
 

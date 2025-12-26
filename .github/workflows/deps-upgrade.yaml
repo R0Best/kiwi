@@ -1,0 +1,31 @@
+name: deps-upgrade
+on:
+  schedule:
+    - cron: "0 6 * * 1"  # weekly, 06:00 UTC Mondays
+  workflow_dispatch:
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v7
+      - name: Upgrade lockfile
+        run: uv lock --upgrade
+      - name: Re-export requirements
+        run: |
+          uv export --frozen --group default --output-file=requirements.txt
+          uv export --frozen --group dev --output-file=requirements-dev.txt
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v8
+        with:
+          commit-message: "chore(deps): uv lock --upgrade + export"
+          title: "chore(deps): upgrade dependencies"
+          body: "Automated dependency upgrade via uv."
+          branch: chore/uv-deps-upgrade
+          labels: chore, dependencies

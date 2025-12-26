@@ -1,0 +1,73 @@
+name: release-badge
+
+on:
+  # Trigger on version tags (v1.0.0, v1.2.3, etc.)
+  push:
+    tags:
+      - 'v*'
+  # Keep release triggers for manual releases
+  release:
+    types: [published, edited]
+  # Manual trigger
+  workflow_dispatch:
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Fetch more history and checkout main branch
+          fetch-depth: 0
+          ref: main
+
+      - name: Get version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
+            # Extract version from tag
+            VERSION="${{ github.ref_name }}"
+            echo "Got version from tag: $VERSION"
+          else
+            # Get from latest release (for manual triggers or release events)
+            VERSION=$(gh release list --limit 1 --json tagName --jq '.[0].tagName // "v0.0.0"')
+            echo "Got version from latest release: $VERSION"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate release badge
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          # Remove 'v' prefix if present for cleaner display
+          CLEAN_VERSION=${VERSION#v}
+
+          # Create badges directory if it doesn't exist
+          mkdir -p .github/badges
+
+          # Generate the badge SVG
+          BADGE_URL="https://img.shields.io/badge/release-${CLEAN_VERSION}-brightgreen?style=round  -square"
+          curl -s -o .github/badges/release.svg "$BADGE_URL"
+
+          echo "Generated badge for version: $CLEAN_VERSION"
+
+      - name: Commit and push badge
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Add the badge file
+          git add .github/badges/release.svg
+
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update release badge to ${{ steps.version.outputs.version }}"
+            git push origin main
+          fi

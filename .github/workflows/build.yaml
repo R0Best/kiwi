@@ -1,0 +1,167 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write  # needed if you later publish to PyPI with OIDC
+
+jobs:
+  # 1) On pushes to main, compute next version from Conventional Commits,
+  #    tag, and create a GitHub Release. Uses your pyproject config.
+  version:
+    if: startsWith(github.ref, 'refs/heads/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13.11"
+
+      # Will bump version (if needed), create tag "vX.Y.Z", and open a GitHub Release.
+      - name: semantic-release publish (compute version + create release)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}  # if you later enable PyPI
+        run: |
+          uvx python-semantic-release publish
+
+  # 2) On tag pushes (v*), build per OS and upload to that Release.
+  build:
+    if: startsWith(github.ref, 'refs/tags/')
+    name: build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    env:
+      TAG: ${{ github.ref_name }}  # e.g. v0.1.0
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13.11"
+
+      - name: Compute ARCH
+        id: arch
+        shell: bash
+        run: |
+          case "${{ runner.os }}" in
+            Linux|macOS) ARCH="$(uname -m)";;
+            Windows)     ARCH="${PROCESSOR_ARCHITECTURE}";;
+          esac
+          ARCH_LOWER=$(echo "$ARCH" | tr '[:upper:]' '[:lower:]')
+          echo "ARCH=$ARCH_LOWER" >> "$GITHUB_ENV"
+          echo "arch=$ARCH_LOWER" >> "$GITHUB_OUTPUT"
+
+      # Sanity checks and deterministic installs for building the CLI binary.
+      - name: Sync env (locked, all groups)
+        run: uv sync --locked --all-packages
+
+      - name: Run tests (optional, recommended)
+        run: uv run pytest -q
+
+      # Build Python artifacts with uv (sdist + wheel goes to dist/)
+      - name: Build Python artifacts (uv build)
+        run: uv build
+
+      # Create source archives with consistent names (GitHub also auto-adds its own)
+      - name: Create source archives
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git archive --format=tar.gz -o source-${TAG}.tar.gz ${GITHUB_SHA}
+          git archive --format=zip    -o source-${TAG}.zip    ${GITHUB_SHA}
+
+      # Build a single-file CLI with PyInstaller for each OS
+      - name: Build single-file CLI (PyInstaller)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          # Ensure your package imports; create tiny entry that calls your CLI
+          cat > __cli__.py <<'PY'
+          from kiwi import main
+          if __name__ == "__main__":
+              main()
+          PY
+          # Use the project venv so PyInstaller sees installed deps
+          uv run pyinstaller --onefile --name kiwi __cli__.py
+          # Normalize filename per OS
+          case "${{ runner.os }}" in
+            Windows) BIN="dist/kiwi.exe";;
+            *)       BIN="dist/kiwi";;
+          esac
+          echo "BIN_PATH=${BIN}" >> "$GITHUB_ENV"
+
+      # Zip the single-file binary per OS/arch
+      - name: Package CLI binary as zip and tar.gz
+        shell: bash
+        run: |
+          set -euxo pipefail
+          base="kiwi-${TAG}-${{ runner.os }}-${ARCH}"
+          cp "$BIN_PATH" "./${base}"
+          # zip
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            powershell -Command "Compress-Archive -Path '${base}' -DestinationPath '${base}.zip'"
+          else
+            zip -9 "${base}.zip" "${base}"
+          fi
+          # tar.gz
+          tar -czf "${base}.tar.gz" "${base}"
+          rm -f "${base}"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: artifacts-${{ matrix.os }}
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+            source-${{ env.TAG }}.zip
+            source-${{ env.TAG }}.tar.gz
+            kiwi-${{ env.TAG }}-${{ runner.os }}-${{ steps.arch.outputs.arch }}.zip
+            kiwi-${{ env.TAG }}-${{ runner.os }}-${{ steps.arch.outputs.arch }}.tar.gz
+          if-no-files-found: error
+
+  # 3) Collect artifacts from all OS builds and attach them to the GitHub Release.
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: List assets
+        run: ls -R release-assets
+
+      - name: Upload assets to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          fail_on_unmatched_files: true
+          generate_release_notes: false  # semantic-release already generated notes
+          files: |
+            release-assets/dist/*.whl
+            release-assets/dist/*.tar.gz
+            release-assets/source-*.zip
+            release-assets/source-*.tar.gz
+            release-assets/kiwi-*.zip
+            release-assets/kiwi-*.tar.gz
