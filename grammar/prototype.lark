@@ -1,0 +1,9 @@
+function_prototype: IDENTIFIER_IDENTIFIER SEPARATOR_BRACKET_ROUND_OPEN [typed_arg_list] SEPARATOR_BRACKET_ROUND_CLOSED SEPARATOR_ARROW SEPARATOR_BRACKET_ROUND_OPEN [typed_arg_list] SEPARATOR_BRACKET_ROUND_CLOSED -> func_proto
+
+// List: arg1: Type1, arg2: Type2
+typed_arg_list: typed_arg (SEPARATOR_COMMA typed_arg)*
+
+// Single Item: name: Type
+typed_arg: IDENTIFIER_IDENTIFIER SEPARATOR_COLON type_name
+
+type_name: IDENTIFIER_IDENTIFIER

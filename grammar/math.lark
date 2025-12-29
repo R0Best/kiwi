@@ -1,0 +1,57 @@
+// --- 1. Token Declarations ---
+// We must declare every token type from your Pydantic Enum that we use here.
+// This tells Lark: "Expect these tokens from the external lexer."
+
+%declare IDENTIFIER_IDENTIFIER
+%declare OPERATOR_ASSIGNMENT
+
+%declare OPERATOR_ARITHMETIC_ADDITION
+%declare OPERATOR_ARITHMETIC_SUBTRACTION
+%declare OPERATOR_ARITHMETIC_MULTIPLICATION
+%declare OPERATOR_ARITHMETIC_DIVISION
+%declare OPERATOR_ARITHMETIC_MODULO
+%declare OPERATOR_ARITHMETIC_EXPONENTIATION
+
+%declare LITERAL_NUMBER_INTEGER
+%declare LITERAL_NUMBER_FLOAT
+
+%declare SEPARATOR_BRACKET_ROUND_OPEN
+%declare SEPARATOR_BRACKET_ROUND_CLOSED
+
+// --- 2. The Grammar Rules ---
+
+// "start" is the entry point.
+// Using "?" inlines the rule if it only has one child (keeps the AST clean).
+?start: statement
+
+?statement: assignment
+          | expression
+
+// Assignment: x = 10
+assignment: IDENTIFIER_IDENTIFIER OPERATOR_ASSIGNMENT expression -> var_assign
+
+// --- 3. Math with Operator Precedence ---
+// The order of these rules defines the Order of Operations (PEMDAS).
+// Lower rules bind tighter.
+
+// Level 1: Addition and Subtraction (Lowest Priority)
+?expression: term
+     | expression OPERATOR_ARITHMETIC_ADDITION term      -> add
+     | expression OPERATOR_ARITHMETIC_SUBTRACTION term   -> sub
+
+// Level 2: Multiplication, Division, Modulo
+?term: power
+     | term OPERATOR_ARITHMETIC_MULTIPLICATION power -> mul
+     | term OPERATOR_ARITHMETIC_DIVISION power       -> div
+     | term OPERATOR_ARITHMETIC_MODULO power         -> mod
+
+// Level 3: Exponentiation (Highest Priority)
+// Note: recursive on the RIGHT ('power' is last) to support 2^3^4 as 2^(3^4)
+?power: atom
+      | atom OPERATOR_ARITHMETIC_EXPONENTIATION power -> pow
+
+// Level 4: Atoms (The base units)
+?atom: LITERAL_NUMBER_INTEGER           -> number_int
+     | LITERAL_NUMBER_FLOAT             -> number_float
+     | IDENTIFIER_IDENTIFIER            -> var_load
+     | SEPARATOR_BRACKET_ROUND_OPEN expression SEPARATOR_BRACKET_ROUND_CLOSED

@@ -2,9 +2,7 @@
 
 from enum import StrEnum
 
-from pydantic import BaseModel, Field, model_validator
-
-from kiwi.lexer.errors import DebugInfo, UnmatchedCategoryError
+from pydantic import BaseModel, Field
 
 
 class TokenCategory(StrEnum):
@@ -164,20 +162,3 @@ class Token(BaseModel):
     def category(self) -> TokenCategory:
         """Get the category of the token."""
         return self.type.category
-
-    @model_validator(mode="after")
-    def post_init_check(self) -> "Token":
-        """Run additional checks after initialization."""
-        if self.type.category != self.category:
-            raise UnmatchedCategoryError(
-                debug_info=DebugInfo(
-                    position=self.position,
-                    line=self.line,
-                    column=self.column,
-                    text=self.text,
-                ),
-                expected_category=self.type.category,
-                actual_category=self.category,
-            )
-
-        return self

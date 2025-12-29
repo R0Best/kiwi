@@ -1,4 +1,4 @@
-"""Initialize the kiwi package and define the CLI entry point."""
+"""Initialize the kiwi package."""
 
 from pathlib import Path
 
