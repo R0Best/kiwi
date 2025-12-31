@@ -30,6 +30,9 @@ scripts.kiwi = "kiwi:main"
 dev = [
   "bandit>=1.9.2",
   "detect-secrets>=1.5",
+  "mkdocs>=1.6.1",
+  "mkdocs-material>=9.7.1",
+  "mkdocstrings>=1",
   "pre-commit>=4.5.1",
   "pyinstaller>=6.17",
   "pytest>=9.0.2",
@@ -83,7 +86,7 @@ format.docstring-code-line-length = "dynamic"
 format.docstring-code-format = true
 
 lint.select = [ "ALL" ]
-lint.ignore = [ "COM812", "D203", "D212" ]
+lint.ignore = [ "COM812", "D203", "D212", "FBT001", "FBT002" ]
 lint.per-file-ignores."tests/**" = [
   "ANN",     # allow missing/partial type annotations in tests
   "D",       # skip pydocstyle checks in tests (docstrings not required)

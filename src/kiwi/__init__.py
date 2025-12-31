@@ -16,7 +16,7 @@ def lex(input_file: str) -> None:
     with Path(input_file).open("r") as file:
         lexer = Lexer(source_code=file.read())
 
-    for token in lexer.tokenize():
+    for token in lexer:
         typer.echo(token) if token.category != TokenCategory.WHITESPACE else None
 
 

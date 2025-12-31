@@ -1,4 +1,4 @@
-"""Initialization module for the lexer package."""
+"""Lexer package."""
 
 from .lexer import Lexer
 

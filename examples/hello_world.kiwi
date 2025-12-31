@@ -1,0 +1,6 @@
+use "std"
+
+
+main () -> (I8) {
+  std::console.println("Hello, world!")
+}

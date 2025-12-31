@@ -1,0 +1,14 @@
+site_name: Kiwi
+theme:
+  name: material
+  features:
+    - navigation.tabs # Top navbar like a real website
+    - search.suggest  # Auto-complete search bar
+
+plugins:
+  - mkdocstrings # This pulls your Python docstrings automatically!
+
+nav:
+  - Home: index.md
+  - Syntax:
+    - 'Comments': syntax/comments.md
