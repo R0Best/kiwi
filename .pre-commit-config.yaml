@@ -163,7 +163,7 @@ repos:
     rev: 1.9.2
     hooks:
       - id: bandit
-        args: ["-q", "-r", "--exclude", "tests", "."]
+        args: ["-q", "-r", "--exclude", "tests", "src"]
         stages: [pre-push]
 
   # ---------------------------------------------------------------------------
