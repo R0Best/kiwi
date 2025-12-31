@@ -57,6 +57,7 @@ repos:
             "--no-dev",
             "--format",
             "requirements.txt",
+            "--no-emit-project",
             "--output-file=requirements.txt",
           ]
         files: ^(pyproject\.toml|uv\.lock)$
@@ -70,6 +71,7 @@ repos:
             "--only-dev",
             "--format",
             "requirements.txt",
+            "--no-emit-project",
             "--output-file=requirements-dev.txt",
           ]
         files: ^(pyproject\.toml|uv\.lock)$
